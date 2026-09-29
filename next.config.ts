@@ -57,8 +57,15 @@ const nextConfig: NextConfig = {
     "172.31.*.*",
     "192.168.*.*",
   ],
-  async headers() {
-    return [
+  // Frontend/backend split (pi-cloud Phase 1): browser calls to
+  // /api/cloud/* are proxied same-origin to the FastAPI backend, so the
+  // browser never needs the backend address and there are no CORS issues.
+  // API_URL is server-side only; defaults to the local backend dev server.
+  async rewrites() {
+    const apiUrl = (process.env.API_URL ?? "http://localhost:8000").replace(/\/$/, "");
+    return [{ source: "/api/cloud/:path*", destination: `${apiUrl}/api/v1/:path*` }];
+  },
+  async headers() {    return [
       {
         source: "/",
         headers: [

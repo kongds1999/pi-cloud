@@ -1,0 +1,34 @@
+# pi-cloud local dev: Next.js frontend + FastAPI backend.
+#
+#   docker compose up --build
+#
+# web -> http://localhost:30141 (same-origin /api/cloud/* -> backend)
+# backend -> http://localhost:8000 (direct API + /docs)
+#
+# For Supabase persistence: fill backend/.env (see backend/.env.example)
+# and uncomment the env_file line below.
+
+services:
+  backend:
+    build: ./backend
+    ports:
+      - "8000:8000"
+    # env_file:
+    #   - backend/.env
+    environment:
+      DEV_OWNER_ID: ${DEV_OWNER_ID:-00000000-0000-0000-0000-000000000000}
+      CORS_ORIGINS: http://localhost:30141
+
+  web:
+    image: node:22-bookworm
+    working_dir: /app
+    volumes:
+      - .:/app
+      - /app/node_modules
+    ports:
+      - "30141:30141"
+    command: sh -c "npm run dev"
+    environment:
+      API_URL: http://backend:8000
+    depends_on:
+      - backend

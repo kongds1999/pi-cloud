@@ -8,20 +8,26 @@
 - [x] `SandboxProvider` interface + `LocalDockerProvider` reference impl + E2B stub
 - [x] Architecture, upstream-strategy, auth design docs
 
-## Phase 1 — DB-backed sessions (next)
+## Phase 1 — Frontend/backend split 🚧 (in progress, branch `phase-1`)
 
-Goal: conversations persist in Supabase; JSONL stays the agent's working copy.
+Goal: conventional separation — Next.js is a pure frontend, FastAPI owns
+data access and (later) orchestration. The browser never touches Supabase.
 
-- [ ] `.env.example` + env validation
-- [ ] Tail-syncer: watch sandbox/local JSONL files → `appendLines()` on change
-      (start with the local `~/.pi/agent/sessions` layout, reuse
-      `lib/session-reader.ts`'s bounded-tail logic)
-- [ ] First seams: `GET /api/sessions` and `GET /api/sessions/[id]` delegate
-      to `cloud/db/session-store.ts` when `CLOUD_DB=1` (register in seam registry)
-- [ ] `app/api/cloud/workspaces` CRUD (persistent volume bookkeeping)
-- [ ] `GET /api/cloud/health`
-- [ ] Tests: round-trip a real pi JSONL session through the store
-- [ ] Local verification: `CLOUD_DB=1 npm run dev` against a Supabase project
+- [x] `backend/` FastAPI service: `GET /health`, `/api/v1/workspaces`,
+      `/api/v1/sessions`, `POST /api/v1/sessions/{id}/entries`
+- [x] Storage abstraction: Supabase Postgres when `SUPABASE_URL` +
+      `SUPABASE_SERVICE_KEY` are set, in-memory dev fallback otherwise
+      (`GET /health` reports which)
+- [x] Next.js rewrite `/api/cloud/:path*` → backend `/api/v1/:path*`
+      (same-origin, no CORS); typed client `lib/cloud/backend.ts`
+- [x] `/cloud` status page: backend health + workspace list/create
+- [x] `docker-compose.yml` — one-command local run (web + backend)
+- [ ] Local verification: backend + frontend round-trip (see CLOUD.md)
+- [ ] Migrate the first real seam: session list/read via backend instead
+      of local JSONL (tail-syncer: watch JSONL → `POST .../entries`)
+
+Later (was Phase 1, now Phase 2+): `CLOUD_DB=1` seams inside Next.js API
+routes are superseded by the split — all DB access moves to FastAPI.
 
 ## Phase 2 — Sandbox execution
 
